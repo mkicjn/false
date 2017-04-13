@@ -9,13 +9,18 @@
   `(let ,(loop for i from 1 to to-pop
 	       collect `(,(intern (write-to-string i)) (forth-pop)))
      (funcall #'forth-push-all ,@pushing) "ok"))
-; Manually defined functions
+; Instruction evaluation macro
+(defmacro as-forth (&rest args)
+  `(progn ,@(loop for thing in args for num = (typep thing 'fixnum)
+		  when num collect `(forth-push ,thing)
+		  unless num collect `(,thing))))
+; Manually defined Forth functions
 (defun clearstack () (setq *forth-stack* nil) "ok")
 (defun cr () (terpri) "ok")
 (defun dot () (princ (forth-pop)) "ok")
 (defun dot-s () (princ *forth-stack*) "ok")
 (defun drop () (forth-pop) "ok")
-; Macro-defined functions
+; Macro-defined Forth functions
 (defun swap () (forth-rearr 2 |1| |2|))
 (defun dup () (forth-rearr 1 |1| |1|))
 (defun over () (forth-rearr 2 |2| |1| |2|))
