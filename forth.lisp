@@ -41,4 +41,6 @@
   (let ((n1 (forth-pop)) (n2 (forth-pop)))
     (forth-push (mod n2 n1)) (forth-push (/ n2 n1))) "ok")
 ;;; Test data
+(defun quad () " c b a x -- x(ax+b)+c "
+  (as-forth dup rot * rot + * + ))
 (loop for i from 1 to 6 do (forth-push i))
