@@ -30,11 +30,15 @@
 (defun dup () (forth-rearr 1 |1| |1|))
 (defun over () (forth-rearr 2 |2| |1| |2|))
 (defun rot () (forth-rearr 3 |2| |1| |3|))
+(defun 2swap () (forth-rearr 4 |2| |1| |4| |3|))
+(defun 2dup () (forth-rearr 2 |2| |1| |2| |1|))
+(defun 2over () (forth-rearr 4 |4| |3| |2| |1| |4| |3|))
+(defun 2rot () (forth-rearr 6 |4| |3| |2| |1| |6| |5|))
 ;;; Basic Forth arithmetic handling functions
 (defun forth-arith (op) (swap)
   (forth-push (funcall op (forth-pop) (forth-pop))) "ok")
 (defun /mod ()
   (let ((n1 (forth-pop)) (n2 (forth-pop)))
-    (forth-push (mod n2 n1)) (forth-push (_/ n2 n1))) "ok")
+    (forth-push (mod n2 n1)) (forth-push (/ n2 n1))) "ok")
 ;;; Test data
-(loop for i from 1 to 4 do (forth-push i))
+(loop for i from 1 to 6 do (forth-push i))
