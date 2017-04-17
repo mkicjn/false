@@ -30,10 +30,14 @@
 (defun dup () (forth-rearr 1 |1| |1|))
 (defun over () (forth-rearr 2 |2| |1| |2|))
 (defun rot () (forth-rearr 3 |2| |1| |3|))
+(defun nip () (forth-rearr 2 |1|))
+(defun tuck () (forth-rearr 2 |1| |2| |1|))
 (defun 2swap () (forth-rearr 4 |2| |1| |4| |3|))
 (defun 2dup () (forth-rearr 2 |2| |1| |2| |1|))
 (defun 2over () (forth-rearr 4 |4| |3| |2| |1| |4| |3|))
 (defun 2rot () (forth-rearr 6 |4| |3| |2| |1| |6| |5|))
+(defun 2nip () (forth-rearr 4 |2| |1|))
+(defun 2tuck () (forth-rearr 4 |2| |1| |4| |3| |2| |1|))
 ;;; Basic Forth arithmetic handling functions
 (defun forth-arith (op) (swap)
   (forth-push (funcall op (forth-pop) (forth-pop))) "ok")
@@ -43,4 +47,5 @@
 ;;; Test data
 (defun quad () " c b a x -- x(ax+b)+c "
   (as-forth dup rot * rot + * + ))
+
 (loop for i from 1 to 6 do (forth-push i))
