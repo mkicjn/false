@@ -22,10 +22,11 @@
     (#\% 'F-drop)
     (#\\ 'F-swap)
     (#\@ 'F-rot)
+    (#\O 'F-pick)
     ))
 
 ;;; to-do:
-;;;	Stack: slashed-o
+;;;	Stack:			'
 ;;;	Bitwise operators: 	_ & | ~
 ;;;	Comparison:		= >
 ;;;	Lambdas:		[ ] ! ? #
@@ -56,6 +57,7 @@
 (defun F-drop () (F-pop) *FALSE-stack*)
 (defun F-swap () (FALSE-rearr 2 |1| |2|))
 (defun F-rot () (FALSE-rearr 3 |2| |1| |3|))
+(defun F-pick () (F-push (nth (1- (F-pop)) *FALSE-stack*)))
 
 (defun F+ () (FALSE-arithmetic #'+))
 (defun F- () (FALSE-arithmetic #'-))
