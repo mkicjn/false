@@ -50,7 +50,7 @@
             (F-push-all ,@pushing)))
 
 (defmacro FALSE-arithmetic (fun)
-  `(progn (F-nilcull) (F-push (argswap ,fun (F-pop) (F-pop)))))
+  `(progn (F-push (argswap ,fun (F-pop) (F-pop)))))
 
 (defun F-dup () (F-push (car *FALSE-stack*)))
 (defun F-drop () (F-pop) *FALSE-stack*)
