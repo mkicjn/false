@@ -24,15 +24,14 @@
     (#\@ 'F-rot)
     ))
 
-#| to-do:
-	Stack: slashed-o
-	Bitwise operators: 	_ & | ~
-	Comparison:		= >
-	Lambdas:		[ ] ! ? #
-	Variables:		a-z : ;
-	I/O:			^ , " . eszett
-	Comments:		{ }
-|#
+;;; to-do:
+;;;	Stack: slashed-o
+;;;	Bitwise operators: 	_ & | ~
+;;;	Comparison:		= >
+;;;	Lambdas:		[ ] ! ? #
+;;;	Variables:		a-z : ;
+;;;	I/O:			^ , " . eszett
+;;;	Comments:		{ }
 
 (defun char->digit (c) (- (char-int c) (char-int #\0)))
 
