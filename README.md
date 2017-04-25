@@ -1,2 +1,2 @@
-# cl-forth-macros
-Implementing some features of Forth using some creative Common Lisp macros
+# cl-false
+Implementing FALSE in Common Lisp using macros [WIP]
