@@ -34,7 +34,7 @@
 ;;; to-do:
 ;;;	Stack:			'
 ;;;	Bitwise operators: 	_ & | ~
-;;;	Lambdas:		? #
+;;;	Lambdas:		#
 ;;;	Variables:		a-z : ;
 ;;;	I/O:			^ , " . eszett
 ;;;	Comments:		{ }
@@ -67,7 +67,7 @@
 (defun F-cond () (F-swap) (if (not (= (F-pop) 0)) (funcall (F-pop)) (F-pop)) *FALSE-stack*)
 
 (defun F+ () (FALSE-arithmetic #'+))
-(defun F- () (FALSE-arithmetic #'-))
+(defun F- () (FALSE-arithmetic #'-)) ;; To-do: Handle input of negative integers
 (defun F* () (FALSE-arithmetic #'*))
 (defun F/ () (FALSE-arithmetic #'/))
 (defun F> () (F-push (if (argswap #'> (F-pop) (F-pop)) -1 0)))
@@ -77,7 +77,8 @@
 
 (defmacro FALSE-parse (arg-string)
   (labels ((FALSE-fun (ch) (cond
-		      ((equal ch #\[) (setf *FALSE-lambda-mode* t) nil)
+		      ((equal ch #\[) (setf *FALSE-current-lambda* nil)
+				      (setf *FALSE-lambda-mode* t) nil)
 		      ((equal ch #\]) 
 		       (setf *FALSE-lambda-mode* nil)
 		       `(F-push ,(lambda ()
