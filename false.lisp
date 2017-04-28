@@ -2,6 +2,7 @@
 (defparameter *FALSE-lambda-mode* nil)
 (defparameter *FALSE-current-lambda* nil)
 (defparameter *FALSE-char-mode* nil)
+(defparameter *FALSE-string-mode* nil)
 ; To-do: Make all values local to FALSE-parse
 
 (defun F-reset () (setf *FALSE-stack* nil))
@@ -25,6 +26,9 @@
     (#\= 'F=)
     (#\~ 'F~)
     (#\_ 'F_)
+    (#\, 'F-cwrite)
+    (#\. 'F-iwrite)
+    ;(#\^ 'F-inchar)
     (#\& 'F-and)
     (#\| 'F-or)
     (#\  'F-space)
@@ -40,11 +44,7 @@
     (#\; 'F-acc)
     ))
 
-;;; to-do:
-;;;	I/O:			^ , " . eszett
-;;;	Comments:		{ }
-
-(defun char->digit (c) (- (char-int c) (char-int #\0)))
+(defun char->digit (c) (- (char-code c) (char-code #\0)))
 
 (defun argswap (fun x y) (funcall fun y x))
 
@@ -55,8 +55,8 @@
 
 (defun F-space () (when (typep (car *FALSE-stack*) 'fixnum) (push nil *FALSE-stack*)))
 
-(defun lowercase-p (ch) (and (>= (char-int ch) (char-int #\a))
-			     (<= (char-int ch) (char-int #\z))))
+(defun lowercase-p (ch) (and (>= (char-code ch) (char-code #\a))
+			     (<= (char-code ch) (char-code #\z))))
 
 (defmacro FALSE-rearr (to-pop &rest pushing)
     `(let ,(loop for i from 1 to to-pop
@@ -99,8 +99,7 @@
 	until (= c 0)
 	do (funcall con)
 	do (setf c (F-pop))
-	when (= c -1) do (funcall fun)
-	)))
+	when (= c -1) do (funcall fun))))
 
 (defun F+ () (FALSE-arithmetic #'+))
 (defun F- () (FALSE-arithmetic #'-))
@@ -115,13 +114,18 @@
 (defun F-or () (FALSE-bitwise #'bit-ior))
 (defun F-set () (set (intern (coerce `(,(F-pop)) 'string)) (F-pop)))
 (defun F-acc () (F-push (eval (intern (coerce `(,(F-pop)) 'string)))))
+(defun F-cwrite () (write-char (code-char (F-pop))))
+(defun F-iwrite () (format t "~d" (F-pop)))
+;(defun F-inchar () (F-push (read-char)))
 
 (defmacro FALSE-encapsulate (&rest args) `(progn (F-space) ,@args (F-nilcull)))
 
 (defun FALSE-fun (ch) (cond
+			((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
+			(*FALSE-string-mode* (write-char ch))
 			((equal ch #\') (setf *FALSE-char-mode* t) nil)
 			(*FALSE-char-mode* (setf *FALSE-char-mode* nil)
-					   `(F-push (char-int ,ch)))
+					   `(F-push (char-code ,ch)))
 			((equal ch #\[) (setf *FALSE-current-lambda* nil)
 					(setf *FALSE-lambda-mode* t) nil)
 			((equal ch #\]) 
@@ -147,7 +151,7 @@
   (loop for input = (read-line)
 	until (equalp input "")
 	do (eval `(FALSE-parse ,input))
-	do (format t "~{~A ~}~%~%CL-FALSE> " (reverse *FALSE-stack*))
+	do (format t "~%~{~A ~}~%~%CL-FALSE> " (reverse *FALSE-stack*))
 	do (finish-output)))
 
 (FALSE-REPL)
