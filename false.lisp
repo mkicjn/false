@@ -2,6 +2,7 @@
 (defparameter *FALSE-lambda-mode* nil)
 (defparameter *FALSE-current-lambda* nil)
 (defparameter *FALSE-char-mode* nil)
+; To-do: Make all values local to FALSE-parse
 
 (defun F-reset () (setf *FALSE-stack* nil))
 
@@ -35,10 +36,11 @@
     (#\! 'F-exec)
     (#\? 'F-cond)
     (#\# 'F-while)
+    (#\: 'F-set)
+    (#\; 'F-acc)
     ))
 
 ;;; to-do:
-;;;	Variables:		a-z : ;
 ;;;	I/O:			^ , " . eszett
 ;;;	Comments:		{ }
 
@@ -52,6 +54,9 @@
 (defun F-nilcull () (when (null (car *FALSE-stack*)) (F-pop)))
 
 (defun F-space () (when (typep (car *FALSE-stack*) 'fixnum) (push nil *FALSE-stack*)))
+
+(defun lowercase-p (ch) (and (>= (char-int ch) (char-int #\a))
+			     (<= (char-int ch) (char-int #\z))))
 
 (defmacro FALSE-rearr (to-pop &rest pushing)
     `(let ,(loop for i from 1 to to-pop
@@ -96,7 +101,6 @@
 	do (setf c (F-pop))
 	when (= c -1) do (funcall fun)
 	)))
-;;; Test: 1[$100\\>][1+]# should leave 100 on the stack
 
 (defun F+ () (FALSE-arithmetic #'+))
 (defun F- () (FALSE-arithmetic #'-))
@@ -109,6 +113,8 @@
 			(bit-not (integer->bitarray (F-pop))))))
 (defun F-and () (FALSE-bitwise #'bit-and))
 (defun F-or () (FALSE-bitwise #'bit-ior))
+(defun F-set () (set (intern (coerce `(,(F-pop)) 'string)) (F-pop)))
+(defun F-acc () (F-push (eval (intern (coerce `(,(F-pop)) 'string)))))
 
 (defmacro FALSE-encapsulate (&rest args) `(progn (F-space) ,@args (F-nilcull)))
 
@@ -128,7 +134,8 @@
 			(t (let ((fun (assoc ch *FALSE-dictionary*)))
 			     (if fun
 			       `(progn (F-nilcull) (funcall ,(cadr fun)) (F-space))
-			       `(funcall #'F-integer ,ch))))))
+			       (if (lowercase-p ch) `(F-push ,ch)
+			       `(funcall #'F-integer ,ch)))))))
 
 (defmacro FALSE-parse (arg-string)
   `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-fun (coerce arg-string 'list)))))
@@ -140,7 +147,7 @@
   (loop for input = (read-line)
 	until (equalp input "")
 	do (eval `(FALSE-parse ,input))
-	do (format t "~{~A ~}~%~%CL-FALSE> " *FALSE-stack*)
+	do (format t "~{~A ~}~%~%CL-FALSE> " (reverse *FALSE-stack*))
 	do (finish-output)))
 
 (FALSE-REPL)
