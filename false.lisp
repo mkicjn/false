@@ -3,6 +3,7 @@
 (defparameter *FALSE-current-lambda* nil)
 (defparameter *FALSE-char-mode* nil)
 (defparameter *FALSE-string-mode* nil)
+(defparameter *FALSE-comment-mode* nil)
 ; To-do: Make all values local to FALSE-parse
 
 (defun F-reset () (setf *FALSE-stack* nil))
@@ -121,6 +122,9 @@
 (defmacro FALSE-encapsulate (&rest args) `(progn (F-space) ,@args (F-nilcull)))
 
 (defun FALSE-fun (ch) (cond
+			((equal ch #\}) (setf *FALSE-comment-mode* nil) nil)
+			(*FALSE-comment-mode* nil)
+			((equal ch #\{) (setf *FALSE-comment-mode* t) nil)
 			((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
 			(*FALSE-string-mode* (write-char ch))
 			((equal ch #\') (setf *FALSE-char-mode* t) nil)
