@@ -1,6 +1,5 @@
 (defparameter *FALSE-stack* nil)
-(defparameter *FALSE-lambda-mode* nil)
-(defparameter *FALSE-current-lambda* nil)
+(defparameter *FALSE-lambda* nil)
 (defparameter *FALSE-char-mode* nil)
 (defparameter *FALSE-string-mode* nil)
 (defparameter *FALSE-comment-mode* nil)
@@ -55,9 +54,6 @@
 (defun F-nilcull () (when (null (car *FALSE-stack*)) (F-pop)))
 
 (defun F-space () (when (typep (car *FALSE-stack*) 'fixnum) (push nil *FALSE-stack*)))
-
-(defun lowercase-p (ch) (and (>= (char-code ch) (char-code #\a))
-			     (<= (char-code ch) (char-code #\z))))
 
 (defmacro FALSE-rearr (to-pop &rest pushing)
     `(let ,(loop for i from 1 to to-pop
@@ -121,32 +117,40 @@
 
 (defmacro FALSE-encapsulate (&rest args) `(progn (F-space) ,@args (F-nilcull)))
 
-(defun FALSE-fun (ch) (cond
-			((equal ch #\}) (setf *FALSE-comment-mode* nil) nil)
-			(*FALSE-comment-mode* nil)
-			((equal ch #\{) (setf *FALSE-comment-mode* t) nil)
-			((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
-			(*FALSE-string-mode* (write-char ch))
-			((equal ch #\') (setf *FALSE-char-mode* t) nil)
-			(*FALSE-char-mode* (setf *FALSE-char-mode* nil)
-					   `(F-push (char-code ,ch)))
-			((equal ch #\[) (setf *FALSE-current-lambda* nil)
-					(setf *FALSE-lambda-mode* t) nil)
-			((equal ch #\]) 
-			 (setf *FALSE-lambda-mode* nil)
-			 `(F-push (lambda ()
-				    (eval (FALSE-encapsulate
-					     ,@(remove-if #'null (mapcar #'FALSE-fun *FALSE-current-lambda*)))))))
-			(*FALSE-lambda-mode* (setf *FALSE-current-lambda*
-						   `(,@*FALSE-current-lambda* ,ch)) nil)
-			(t (let ((fun (assoc ch *FALSE-dictionary*)))
-			     (if fun
-			       `(progn (F-nilcull) (funcall ,(cadr fun)) (F-space))
-			       (if (lowercase-p ch) `(F-push ,ch)
-			       `(funcall #'F-integer ,ch)))))))
-
 (defmacro FALSE-parse (arg-string)
-  `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-fun (coerce arg-string 'list)))))
+  (labels 
+    ((FALSE-fun (ch)
+	       (cond
+		 ((equal ch #\}) (setf *FALSE-comment-mode* nil) nil)
+		 (*FALSE-comment-mode* nil)
+		 ((equal ch #\{) (setf *FALSE-comment-mode* t) nil)
+		 ((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
+		 (*FALSE-string-mode* (write-char ch))
+		 ((equal ch #\') (setf *FALSE-char-mode* t) nil)
+		 (*FALSE-char-mode* (setf *FALSE-char-mode* nil)
+				    `(F-push (char-code ,ch)))
+
+		 ((equal ch #\]) 
+		  (let ((l `(lambda ()
+			      (FALSE-encapsulate
+				,@(remove-if #'null (mapcar #'FALSE-fun (pop *FALSE-lambda*)))))))
+		    (format t "~A~%~%" l)
+		    (if (> (length *FALSE-lambda*) 1)
+		      (progn (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,l)) nil)
+		      `(F-push ,l))))
+
+		 ((equal ch #\[) (push nil *FALSE-lambda*) nil)
+		 (*FALSE-lambda* (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,ch))
+				 (format t "~A~%~%" *FALSE-lambda*)
+				 nil)
+		 (t (let ((fun (assoc ch *FALSE-dictionary*)))
+		      (if fun
+			`(progn (F-nilcull) (funcall ,(cadr fun)) (F-space))
+			(if (digit-char-p ch) `(funcall #'F-integer ,ch) `(F-push ,ch))))))))
+  `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-fun (coerce arg-string 'list))))))
+
+(defun FALSE->LISP (arg-string)
+  (macroexpand `(FALSE-parse ,arg-string)))
 
 (defun FALSE-REPL ()
   (F-reset)
