@@ -65,17 +65,17 @@
 
 (defun integer->bitarray (arg)
   (if (>= arg 0)
-  (coerce (cdr (butlast (loop for i = (expt 2 16) then (/ i 2)
+  (coerce (cdr (butlast (loop for i = (expt 2 32) then (/ i 2)
 				      for n = arg then (if (>= n (* i 2)) (- n (* i 2)) n)
 				      for r = (floor (/ n i))
 				      collect r into a
 				      when (< i 1) return a)))
   'bit-vector)
-  (integer->bitarray (+ (expt 2 16) arg))))
+  (integer->bitarray (+ (expt 2 32) arg))))
 
 (defun bitarray->integer (b)
   (let ((unsigned (reduce (lambda (x y) (+ (ash x 1) y)) b)))
-    (if (< unsigned (expt 2 15)) unsigned (- (- (expt 2 15) (mod unsigned (expt 2 15)))))))
+    (if (< unsigned (expt 2 31)) unsigned (- (- (expt 2 31) (mod unsigned (expt 2 31)))))))
 
 (defmacro FALSE-bitwise (fun)
   `(F-push (bitarray->integer
@@ -155,21 +155,25 @@
 	   (if (digit-char-p ch) `(funcall #'F-integer ,ch) `(F-push ,ch)))))))
 
 
-(defmacro FALSE-parse (arg-string)
+(defmacro FALSE-parse-list (arg-list)
   (setf *FALSE-input* nil)
-  `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-char->fun (coerce arg-string 'list)))))
+  `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-char->fun arg-list))))
+
+(defmacro FALSE-parse-string (arg-string)
+  `(FALSE-parse-list ,(coerce arg-string 'list)))
 
 (defun FALSE->LISP (arg-string)
   (macroexpand `(FALSE-parse ,arg-string)))
 
 (defun FALSE-REPL ()
   (F-reset)
-  (format t "Enter Q to quit.~%CL-FALSE> ")
-  (finish-output)
-  (loop for input = (read-line)
-	until (equalp input "Q")
-	do (eval `(FALSE-parse ,input))
-	do (format t "~%~{~A ~}~%~%CL-FALSE> " (reverse *FALSE-stack*))
+  (format t "Enter Q alone to quit.~%CL-FALSE> ") (finish-output)
+  (loop for input = (loop for i = (coerce (read-line) 'list) then `(,@i #\Newline ,@(coerce (read-line) 'list))
+			  until (zerop (mod (count-if (lambda (c) (equal c #\")) i) 2))
+			  finally (return i))
+	until (equalp input '(#\Q))
+	do (eval `(FALSE-parse-list ,input))
+	do (format t "~%Stack: ~{~A ~}~%~%CL-FALSE> " (reverse *FALSE-stack*))
 	do (finish-output)))
 
 (FALSE-REPL)
