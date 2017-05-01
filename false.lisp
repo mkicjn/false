@@ -125,15 +125,6 @@
     ((equal ch #\}) (setf *FALSE-comment-mode* nil) nil)
     (*FALSE-comment-mode* nil)
     ((equal ch #\{) (setf *FALSE-comment-mode* t) nil)
-    ((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
-    (*FALSE-string-mode* (write-char ch))
-    ((equal ch #\') (setf *FALSE-char-mode* t) nil)
-    (*FALSE-char-mode* (setf *FALSE-char-mode* nil)
-		       `(F-push (char-code ,ch)))
-    ((equal ch #\^) (unless *FALSE-input*
-		      (progn (format t "Input: ") (finish-output)
-			     (setf *FALSE-input* (coerce (read-line) 'list))))
-		    `(F-push (char-code ,(pop *FALSE-input*))))
 
     ((equal ch #\]) (decf *FALSE-lambda-depth*)
 		    (if (zerop *FALSE-lambda-depth*)
@@ -149,6 +140,15 @@
 
     ((> *FALSE-lambda-depth* 0) (FALSE-lambda-append ch))
 
+    ((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
+    ((and *FALSE-string-mode* (zerop *FALSE-lambda-depth*)) `(write-char ,ch))
+    ((equal ch #\') (setf *FALSE-char-mode* t) nil)
+    (*FALSE-char-mode* (setf *FALSE-char-mode* nil)
+		       `(F-push (char-code ,ch)))
+    ((equal ch #\^) (unless *FALSE-input*
+		      (progn (format t "Input: ") (finish-output)
+			     (setf *FALSE-input* (coerce (read-line) 'list))))
+		    `(F-push (char-code ,(pop *FALSE-input*))))
     (t (let ((fun (assoc ch *FALSE-dictionary*)))
 	 (if fun
 	   `(progn (F-nilcull) (funcall ,(cadr fun)) (F-space))
