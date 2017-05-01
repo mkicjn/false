@@ -8,4 +8,5 @@ Example program (deliberately over-complex to demonstrate major functionalities)
 `1 i:
 [10>$$[[1-]]?\~[[1+]]?\%]f:
 [$;@!\:]u:
-i; [$10=~][$f;!i$@\u;!;]#`
+[[$10=~][$f;!i$@\u;!;]#]l:
+i;l;!`
