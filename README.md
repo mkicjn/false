@@ -9,5 +9,3 @@ Example program (deliberately over-complex to demonstrate major functionalities)
 [10>$$[[1-]]?\~[[1+]]?\%]f:
 [$;@!\:]u:
 i; [$10=~][$f;!i$@\u;!;]#`
-
-This example doesn't work using my implementation just yet; I still need to sort out nested lambdas. It should be able to work soon, though.
