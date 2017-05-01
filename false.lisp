@@ -117,9 +117,7 @@
 ;(defun F-inchar () (F-push (read-char)))
 
 (defun FALSE-lambda-append (ch)
-  (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,ch))
-  (format t "lambda: ~A~%" *FALSE-lambda*)
-  nil)
+  (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,ch)) nil)
 
 (defmacro FALSE-encapsulate (&rest args) `(progn (F-space) ,@args (F-nilcull)))
 
@@ -170,4 +168,4 @@
 	do (format t "~%~{~A ~}~%~%CL-FALSE> " (reverse *FALSE-stack*))
 	do (finish-output)))
 
-;(FALSE-REPL)
+(FALSE-REPL)
