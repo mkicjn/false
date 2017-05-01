@@ -1,5 +1,6 @@
 (defparameter *FALSE-stack* nil)
 (defparameter *FALSE-lambda* nil)
+(defparameter *FALSE-lambda-depth* 0)
 (defparameter *FALSE-char-mode* nil)
 (defparameter *FALSE-string-mode* nil)
 (defparameter *FALSE-comment-mode* nil)
@@ -115,39 +116,46 @@
 (defun F-iwrite () (format t "~d" (F-pop)))
 ;(defun F-inchar () (F-push (read-char)))
 
+(defun FALSE-lambda-append (ch)
+  (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,ch))
+  (format t "lambda: ~A~%" *FALSE-lambda*)
+  nil)
+
 (defmacro FALSE-encapsulate (&rest args) `(progn (F-space) ,@args (F-nilcull)))
 
+(defun FALSE-char->fun (ch)
+  (cond
+    ((null ch) nil)
+    ((equal ch #\}) (setf *FALSE-comment-mode* nil) nil)
+    (*FALSE-comment-mode* nil)
+    ((equal ch #\{) (setf *FALSE-comment-mode* t) nil)
+    ((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
+    (*FALSE-string-mode* (write-char ch))
+    ((equal ch #\') (setf *FALSE-char-mode* t) nil)
+    (*FALSE-char-mode* (setf *FALSE-char-mode* nil)
+		       `(F-push (char-code ,ch)))
+
+    ((equal ch #\]) (decf *FALSE-lambda-depth*)
+		    (if (zerop *FALSE-lambda-depth*)
+		      `(F-push (lambda () (FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-char->fun (pop *FALSE-lambda*))))))
+		      (FALSE-lambda-append ch)))
+
+    ((equal ch #\[)
+     (if (> *FALSE-lambda-depth* 0)
+       (FALSE-lambda-append ch)
+       (push nil *FALSE-lambda*))
+     (incf *FALSE-lambda-depth*) nil)
+
+    ((> *FALSE-lambda-depth* 0) (FALSE-lambda-append ch))
+
+    (t (let ((fun (assoc ch *FALSE-dictionary*)))
+	 (if fun
+	   `(progn (F-nilcull) (funcall ,(cadr fun)) (F-space))
+	   (if (digit-char-p ch) `(funcall #'F-integer ,ch) `(F-push ,ch)))))))
+
+
 (defmacro FALSE-parse (arg-string)
-  (labels 
-    ((FALSE-fun (ch)
-	       (cond
-		 ((equal ch #\}) (setf *FALSE-comment-mode* nil) nil)
-		 (*FALSE-comment-mode* nil)
-		 ((equal ch #\{) (setf *FALSE-comment-mode* t) nil)
-		 ((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
-		 (*FALSE-string-mode* (write-char ch))
-		 ((equal ch #\') (setf *FALSE-char-mode* t) nil)
-		 (*FALSE-char-mode* (setf *FALSE-char-mode* nil)
-				    `(F-push (char-code ,ch)))
-
-		 ((equal ch #\]) 
-		  (let ((l `(lambda ()
-			      (FALSE-encapsulate
-				,@(remove-if #'null (mapcar #'FALSE-fun (pop *FALSE-lambda*)))))))
-		    (format t "~A~%~%" l)
-		    (if (> (length *FALSE-lambda*) 1)
-		      (progn (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,l)) nil)
-		      `(F-push ,l))))
-
-		 ((equal ch #\[) (push nil *FALSE-lambda*) nil)
-		 (*FALSE-lambda* (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,ch))
-				 (format t "~A~%~%" *FALSE-lambda*)
-				 nil)
-		 (t (let ((fun (assoc ch *FALSE-dictionary*)))
-		      (if fun
-			`(progn (F-nilcull) (funcall ,(cadr fun)) (F-space))
-			(if (digit-char-p ch) `(funcall #'F-integer ,ch) `(F-push ,ch))))))))
-  `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-fun (coerce arg-string 'list))))))
+  `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-char->fun (coerce arg-string 'list)))))
 
 (defun FALSE->LISP (arg-string)
   (macroexpand `(FALSE-parse ,arg-string)))
@@ -162,4 +170,4 @@
 	do (format t "~%~{~A ~}~%~%CL-FALSE> " (reverse *FALSE-stack*))
 	do (finish-output)))
 
-(FALSE-REPL)
+;(FALSE-REPL)
