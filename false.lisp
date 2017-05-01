@@ -4,7 +4,7 @@
 (defparameter *FALSE-char-mode* nil)
 (defparameter *FALSE-string-mode* nil)
 (defparameter *FALSE-comment-mode* nil)
-; To-do: Make all values local to FALSE-parse
+(defparameter *FALSE-input* nil)
 
 (defun F-reset () (setf *FALSE-stack* nil))
 
@@ -29,7 +29,6 @@
     (#\_ 'F_)
     (#\, 'F-cwrite)
     (#\. 'F-iwrite)
-    ;(#\^ 'F-inchar)
     (#\& 'F-and)
     (#\| 'F-or)
     (#\  'F-space)
@@ -114,7 +113,6 @@
 (defun F-acc () (F-push (eval (intern (coerce `(,(F-pop)) 'string)))))
 (defun F-cwrite () (write-char (code-char (F-pop))))
 (defun F-iwrite () (format t "~d" (F-pop)))
-;(defun F-inchar () (F-push (read-char)))
 
 (defun FALSE-lambda-append (ch)
   (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,ch)) nil)
@@ -132,10 +130,15 @@
     ((equal ch #\') (setf *FALSE-char-mode* t) nil)
     (*FALSE-char-mode* (setf *FALSE-char-mode* nil)
 		       `(F-push (char-code ,ch)))
+    ((equal ch #\^) (unless *FALSE-input*
+		      (progn (format t "Input: ") (finish-output)
+			     (setf *FALSE-input* (coerce (read-line) 'list))))
+		    `(F-push (char-code ,(pop *FALSE-input*))))
 
     ((equal ch #\]) (decf *FALSE-lambda-depth*)
 		    (if (zerop *FALSE-lambda-depth*)
-		      `(F-push (lambda () (FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-char->fun (pop *FALSE-lambda*))))))
+		      `(F-push (lambda () (FALSE-encapsulate
+					    ,@(remove-if #'null (mapcar #'FALSE-char->fun (pop *FALSE-lambda*))))))
 		      (FALSE-lambda-append ch)))
 
     ((equal ch #\[)
@@ -153,6 +156,7 @@
 
 
 (defmacro FALSE-parse (arg-string)
+  (setf *FALSE-input* nil)
   `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-char->fun (coerce arg-string 'list)))))
 
 (defun FALSE->LISP (arg-string)
@@ -160,10 +164,10 @@
 
 (defun FALSE-REPL ()
   (F-reset)
-  (format t "Enter an empty line to quit.~%CL-FALSE> ")
+  (format t "Enter Q to quit.~%CL-FALSE> ")
   (finish-output)
   (loop for input = (read-line)
-	until (equalp input "")
+	until (equalp input "Q")
 	do (eval `(FALSE-parse ,input))
 	do (format t "~%~{~A ~}~%~%CL-FALSE> " (reverse *FALSE-stack*))
 	do (finish-output)))
