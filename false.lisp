@@ -4,6 +4,7 @@
 (defparameter *FALSE-char-mode* nil)
 (defparameter *FALSE-string-mode* nil)
 (defparameter *FALSE-comment-mode* nil)
+(defparameter *FALSE-has-input* nil)
 (defparameter *FALSE-input* nil)
 
 (defun F-reset () (setf *FALSE-stack* nil))
@@ -29,6 +30,7 @@
     (#\_ 'F_)
     (#\, 'F-cwrite)
     (#\. 'F-iwrite)
+    (#\^ 'F-input)
     (#\& 'F-and)
     (#\| 'F-or)
     (#\  'F-space)
@@ -113,6 +115,14 @@
 (defun F-acc () (F-push (eval (intern (coerce `(,(F-pop)) 'string)))))
 (defun F-cwrite () (write-char (code-char (F-pop))))
 (defun F-iwrite () (format t "~d" (F-pop)))
+(defun F-input ()
+  (when (not *FALSE-has-input*)
+    (progn (format t "Input: ") (finish-output)
+	   (setf *FALSE-input* (coerce (read-line) 'list))
+	   (setf *FALSE-has-input* t)))
+  (if (null *FALSE-input*)
+    (F-push -1)
+    (F-push (char-code (pop *FALSE-input*)))))
 
 (defun FALSE-lambda-append (ch)
   (setf (car *FALSE-lambda*) `(,@(car *FALSE-lambda*) ,ch)) nil)
@@ -145,10 +155,6 @@
     ((equal ch #\') (setf *FALSE-char-mode* t) nil)
     (*FALSE-char-mode* (setf *FALSE-char-mode* nil)
 		       `(F-push (char-code ,ch)))
-    ((equal ch #\^) (unless *FALSE-input*
-		      (progn (format t "Input: ") (finish-output)
-			     (setf *FALSE-input* (coerce (read-line) 'list))))
-		    `(F-push (char-code ,(pop *FALSE-input*))))
     (t (let ((fun (assoc ch *FALSE-dictionary*)))
 	 (if fun
 	   `(progn (F-nilcull) (funcall ,(cadr fun)) (F-space))
@@ -156,6 +162,7 @@
 
 
 (defmacro FALSE-parse-list (arg-list)
+  (setf *FALSE-has-input* nil)
   (setf *FALSE-input* nil)
   `(FALSE-encapsulate ,@(remove-if #'null (mapcar #'FALSE-char->fun arg-list))))
 
