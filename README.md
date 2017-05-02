@@ -20,12 +20,12 @@ Other code snippets:
 [[o;!o;!-0\>~][$@@-\]#%]m:`
 
 `{Repeat (uses i, f)}
-[i:;f:[i;0>][f;!i;1-i:]#]r:`
+[i:f:[i;0>][f;!i;1-i:]#]r:`
 
-Example: `o;!o;!o;!o;!` can be rewritten as `o4r;!`
+Example: `o;!o;!o;!o;!` can be rewritten as `o;4r;!`
 
 `{Basic prime number detector (requires mod, over, repeat)}
-[2[o4r;!m;!0=~@@>&][1+]#=]p:`
+[2[o;4r;!m;!0=~@@>&][1+]#=]p:`
 
-Another example: This function leaves on the stack all prime numbers from 2 to the top number on the stack using x as a temporary variable:
+Another example: This inefficient but compact function leaves on the stack all prime numbers from 2 to the top number on the stack using x as a temporary variable:
 `[x:2[$x;>~][$p;!\$1+@~[\%]?]#%]s:`
