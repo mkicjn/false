@@ -29,3 +29,6 @@ Example: `o;!o;!o;!o;!` can be rewritten as `o;4r;!`
 
 Another example: This inefficient but compact function leaves on the stack all prime numbers from 2 to the top number on the stack using x as a temporary variable:
 `[x:2[$x;>~][$p;!\$1+@~[\%]?]#%]s:`
+
+`{Digits (take an integer as input)}
+[0[^$$'0\>~\'9>~&]['0-\10*+]#%]d:`
