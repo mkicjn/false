@@ -31,7 +31,7 @@ Example: `[...]f:f;!f;!f;!f;!` becomes `[...]4r;!`
 `{Digits (take an integer as input)}
 [0[^$$'0\>~\'9>~&]['0-\10*+]#%]d:`
 
-`{Basic prime number detector (requires over, mod, and repeat}
+`{Basic prime number detector (requires Over, Mod, and Repeat}
 [2[o;4r;!m;!0=~@@>&][1+]#=]p:`
 or `[2[1O1O1O1O[1O1O-0\>~][$@@-\]#%0=~@@>&][1+]#=]p:` requiring nothing
 
