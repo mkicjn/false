@@ -119,21 +119,17 @@
     ((equal ch #\}) (setf *FALSE-comment-mode* nil) nil)
     (*FALSE-comment-mode* nil)
     ((equal ch #\{) (setf *FALSE-comment-mode* t) nil)
-
     ((equal ch #\]) (decf *FALSE-lambda-depth*)
 		    (if (zerop *FALSE-lambda-depth*)
 		      `(F-push (lambda () (FALSE-encapsulate
 					    ,@(remove-if #'null (mapcar #'FALSE-char->fun (pop *FALSE-lambda*))))))
 		      (FALSE-lambda-append ch)))
-
     ((equal ch #\[)
      (if (> *FALSE-lambda-depth* 0)
        (FALSE-lambda-append ch)
        (push nil *FALSE-lambda*))
      (incf *FALSE-lambda-depth*) nil)
-
     ((> *FALSE-lambda-depth* 0) (FALSE-lambda-append ch))
-
     ((equal ch #\") (setf *FALSE-string-mode* (not *FALSE-string-mode*)))
     ((and *FALSE-string-mode* (zerop *FALSE-lambda-depth*)) `(write-char ,ch))
     ((equal ch #\') (setf *FALSE-char-mode* t) nil)
@@ -142,8 +138,7 @@
     (t (let ((fun (assoc ch *FALSE-dictionary*)))
 	 (if fun
 	   `(progn (F-nilcull) (funcall ,(cadr fun)) (F-space))
-	   (if (digit-char-p ch) `(funcall #'F-integer ,ch) `(F-push ,ch)))))))
-
+	   (if (digit-char-p ch) `(F-integer ,ch) `(F-push ,ch)))))))
 
 (defmacro FALSE-parse-list (arg-list)
   (setf *FALSE-has-input* nil)
