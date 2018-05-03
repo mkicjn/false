@@ -1,43 +1,24 @@
 # cl-false
-Implementing FALSE in Common Lisp using macros (mostly finished)
+Implementations of FALSE in Common Lisp and C
 
-Example program (deliberately over-complex to demonstrate major functionalities):
+The Common Lisp version is super old, and very slow. I probably wrote it in high school, so it isn't very good.
+I wrote the new C version recently just for the heck of it. It doesn't have memory management, but it might soon.
 
-`{This leaves all the numbers from i (up/down) to 10 on the stack}`
+The new C version is barebones, but has a few new instructions for convenience, and basic error checking.
+If I add memory management similar to csl, it would be easy to expand on the error checking.
 
-`1 i:
-[10>$$[[1-]]?\~[[1+]]?\%]f:
-[$;@!\:]u:
-[[$10=~][$f;!i$@\u;!;]#]l:
-i;l;!`
+Useful examples:
 
-Here's a better function which does the same thing but to the top item on the stack, using no variables:
+0 to (+/-)N: `[$10>$$[[1-]]?\~[[1+]]?\%\[$10=~][$@@1O!]#\%]`
 
-`[$10>$$[[1-]]?\~[[1+]]?\%\[$10=~][$@@1O!]#\%]`
+Over: `[\$@@]` or `[1O]`
 
-Other code snippets:
+Modulo: `[[1O1O-0\>~][$@@-\]#%]`
 
-`{Over}
-[\$@@]o:` or `[1O]o:` using "pick"
+floor(log10(x)): `[0[^$$'0\>~\'9>~&]['0-\10*+]#%]`
 
-`{Modulo (based on Over)}
-[[1O1O-0\>~][$@@-\]#%]m:`
+Factorial: `[$[$2>][1-$@*\]#%]`
 
-`{Repeat (uses i, f)}
-[i:f:[i;0>][f;!i;1-i:]#]r:`
+Prime number detector: `[2[1O1O1O1O[1O1O-0\>~][$@@-\]#%0=~@@>&][1+]#=]`
 
-Example: `[...]f:f;!f;!f;!f;!` becomes `[...]4r;!`
-
-`{Digits (take an integer as input)}
-[0[^$$'0\>~\'9>~&]['0-\10*+]#%]d:`
-
-`{Basic prime number detector (requires Over, Mod, and Repeat}
-[2[o;4r;!m;!0=~@@>&][1+]#=]p:`
-or `[2[1O1O1O1O[1O1O-0\>~][$@@-\]#%0=~@@>&][1+]#=]p:` requiring nothing
-
-Another example: This inefficient but compact function leaves on the stack all prime numbers from 2 to the top number on the stack using x as a temporary variable:
-`[x:2[$x;>~][$p;!\$1+@~[\%]?]#%]s:`
-
-Final example: The above function but better in every single way possible
-
-`[2[$2O>~][$$p;![@@$]?%1+]#%%]s:`
+Prime numbers from 2 to N: `[2[$2O>~][$$p;![@@$]?%1+]#%%]`
