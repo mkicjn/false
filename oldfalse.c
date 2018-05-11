@@ -1,17 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "src/hash.h"
 #define STACK_SIZE 1000
 #define BUFFER_SIZE 1000
-#define TABLE_SIZE 1000
 void do_char(char *);
 void do_string(char *);
 typedef enum {false,true} bool;
 long vars[26]; // a-z
 long stack[STACK_SIZE];
 long stack_index=0;
-table_t *hash;
 void push(long x)
 {
 	if (stack_index==STACK_SIZE) {
@@ -49,7 +46,6 @@ void do_char(char *pointer)
 	static bool comment=false;
 	static char *open_bracket=NULL;
 	static int bracket_counter=0;
-	static char *open_paren=NULL;
 	char instr=*pointer;
 	// Comments, string printing
 	if (string_mode) {
@@ -67,12 +63,6 @@ void do_char(char *pointer)
 		return;
 	} else if (comment)
 		return;
-	// Character literals
-	if (char_mode) {
-		push((long)instr);
-		char_mode=false;
-		return;
-	}
 	// Blocks
 	if (instr=='[') {
 		bracket_counter++;
@@ -93,24 +83,12 @@ void do_char(char *pointer)
 		return;
 	} else if (open_bracket)
 		return;
-	// Hash table keys
-	if (instr=='(') {
-		open_paren=pointer;
+	// Character literals
+	if (char_mode) {
+		push((long)instr);
+		char_mode=false;
 		return;
-	} else if (instr==')') {
-		if (!open_paren) {
-			puts("Fatal: Unmatched )");
-			exit(1);
-		}
-		*pointer='\0';
-		bucket_t *b=get_bucket(hash,open_paren+1);
-		if (!b)
-			b=add_entry(hash,open_paren+1,NULL);
-		push((long)&b->val);
-		open_paren=NULL;
-		return;
-	} else if (open_paren)
-		return;
+	}
 	// Numbers
 	if ('0'<=instr&&instr<='9') {
 		if (int_mode) {
@@ -241,21 +219,12 @@ void do_char(char *pointer)
 	case 'C': // Clear
 		stack_index=0;
 		break;
-	case 'S': // Stack
+	case 'P': // Print stack
 		for (int i=0;i<stack_index;i++)
 			printf("%ld ",stack[i]);
 		break;
 	case 'N': // Newline
 		putchar('\n');
-		break;
-	case 'P': // Print
-		fputs((char *)pop(),stdout);
-		break;
-	case 'M': // Malloc
-		push((long)malloc(sizeof(long)*pop()));
-		break;
-	case 'F': // Free
-		free((long *)pop());
 		break;
 	}
 }
@@ -266,7 +235,6 @@ void do_string(char *str)
 }
 int main(int argc,char **argv)
 {
-	hash=new_table(TABLE_SIZE);
 	char input[BUFFER_SIZE];
 	for (;;) {
 		*input='\0';
