@@ -6,12 +6,12 @@
 #define BUFFER_SIZE 1000
 #define TABLE_SIZE 1000
 void do_char(char *);
-void do_string(char *);
+void eval(char *);
 typedef enum {false,true} bool;
 long vars[26]; // a-z
 long stack[STACK_SIZE];
 long stack_index=0;
-table_t *hash;
+table_t *env;
 void push(long x)
 {
 	if (stack_index==STACK_SIZE) {
@@ -102,10 +102,11 @@ void do_char(char *pointer)
 			puts("Fatal: Unmatched )");
 			exit(1);
 		}
-		*pointer='\0';
-		bucket_t *b=get_bucket(hash,open_paren+1);
+		char *var=copy_block(open_paren+1,pointer);
+		bucket_t *b=get_bucket(env,var);
 		if (!b)
-			b=add_entry(hash,open_paren+1,NULL);
+			b=add_entry(env,var,NULL);
+		free(var);
 		push((long)&b->val);
 		open_paren=NULL;
 		return;
@@ -219,20 +220,20 @@ void do_char(char *pointer)
 		break;
 	// Execution
 	case '!':
-		do_string((char *)pop());
+		eval((char *)pop());
 		break;
 	case '?':
 		a=pop();
 		if (pop()==~0)
-			do_string((char *)a);
+			eval((char *)a);
 		break;
 	case '#':
 		a=pop(); // Body
 		b=pop(); // Condition
-		do_string((char *)b);
+		eval((char *)b);
 		while (pop()==~0) {
-			do_string((char *)a);
-			do_string((char *)b);
+			eval((char *)a);
+			eval((char *)b);
 		}
 		break;
 	// New features
@@ -259,21 +260,21 @@ void do_char(char *pointer)
 		break;
 	}
 }
-void do_string(char *str)
+void eval(char *str)
 {
 	for (char *s=str;*s;s++)
 		do_char(s);
 }
 int main(int argc,char **argv)
 {
-	hash=new_table(TABLE_SIZE);
+	env=new_table(TABLE_SIZE);
 	char input[BUFFER_SIZE];
 	for (;;) {
 		*input='\0';
 		fgets(input,BUFFER_SIZE,stdin);
 		if (!*input)
 			exit(0);
-		do_string(input);
+		eval(input);
 	}
 	return 0;
 }
